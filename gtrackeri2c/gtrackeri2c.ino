@@ -55,7 +55,18 @@ RTCZero rtc; // Create an RTC object
 
 Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL);
 
+volatile char msgBuff[MESSAGE_BUFF_SIZE];
+
+volatile char *msgPtr = (char *)&msgBuff; 
+
 void reqISR(void);
+
+const char hexchars[] = "0123456789ABCDEF";
+
+void printHexChar(uint8_t x) {
+  Serial.print(hexchars[(x >> 4)]);
+  Serial.print(hexchars[(x & 0x0f)]);
+}
 
 void setup(void) {
 
@@ -68,7 +79,7 @@ void setup(void) {
 
 #ifdef DEBUG
   DEBUG_SERIAL.begin(115200);
-  delay(5000);     // Wait for the serial port to become ready.
+  delay(1000);     // Wait for the serial port to become ready.
   DEBUG_SERIAL.println("gtracker code");
 #endif
 
@@ -202,13 +213,14 @@ void loop() {
   sensors_event_t event;
 
   int i;
+  uint8_t *gDataPtr = (uint8_t *)&gData;
+
   float tempX;
   float tempY;
   float tempZ;
   float tempMag;
 
   bool localReportResults;
-//  bool localReportResults;
 
   noInterrupts();
   localReportResults = reportResults;
@@ -271,9 +283,32 @@ void loop() {
         DEBUG_SERIAL.println("\nReport results is true...\n");
         pixels.clear();
         pixels.show();
-#endif
-        //Shutdown the processor...
+
+        i = 0;
+        gDataPtr = (uint8_t *)&gData;
+        while (i < i2cDataSize) {
+          printHexChar(*(gDataPtr + i));
+          ++i;
+        }
+#endif // DEBUG
+
+        sprintf((char *)&msgBuff,
+                "maxX = %.2f maxY = %.2f maxZ = %.2f g\nmaxMagX = %.2f maxMagY = %.2f maxMagZ = %.2f maxMag = %.2f g\n\r",
+                gData.maxX, gData.maxY, gData.maxZ, gData.maxMagX, gData.maxMagY, gData.maxMagZ, gData.maxMag);
+
+#ifdef DEBUG
+        DEBUG_SERIAL.print("\n");
+        DEBUG_SERIAL.print((char *)msgBuff);
+        DEBUG_SERIAL.print("\n");
+#endif // DEBUG
+
+
+        delay(5000);
+
+        while(1) { //Shutdown the processor...
+        }
       }
+
       yield();
     }
   }
@@ -281,9 +316,10 @@ void loop() {
 
 void reqISR(void) {
 
-//  Wire.beginTransmission();
-  Wire.write((uint8_t *)&gData.maxX, i2cDataSize);
-//  Wire.endTransmission();
-  reportDone = true;
+  if (reportDone == false) {
 
+    Wire.write((uint8_t *)&gData, i2cDataSize);
+    reportDone = true;
+
+  }
 }

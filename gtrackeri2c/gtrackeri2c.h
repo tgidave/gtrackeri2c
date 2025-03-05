@@ -13,6 +13,7 @@
 //*****************************************************
 
 //#define I2C_BUFF_MAX_LEN 32
+#define MESSAGE_BUFF_SIZE 340
 
 typedef struct i2cData {
   float maxX;
