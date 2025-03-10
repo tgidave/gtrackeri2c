@@ -28,6 +28,8 @@
 #include <Adafruit_Sensor.h>
 #include <RTCZero.h> // Include RTC library - make sure it's installed!
 #include <Adafruit_NeoPixel.h>
+#include <ArduinoLowPower.h>
+//#include <Adafruit_SleepyDog.h>
 #include "gtrackeri2c.h"
 
 #define DEBUG
@@ -89,12 +91,15 @@ void setup(void) {
 
   pixels.begin();  // initialize the pixel
 
+#ifdef DEBUG
+    DEBUG_SERIAL.println("Starting up the H3LIS331.");
+#endif  // DEBUG    H3LIS331Down = true;
+
   if (!lis.begin_I2C()) {   // change this to 0x19 for alternative i2c address
 
 #ifdef DEBUG
     DEBUG_SERIAL.println("H3LIS331 not found!!!");
-#endif  // DEBUG
-    H3LIS331Down = true;
+#endif  // DEBUG    H3LIS331Down = true;
 
   } else {
 
@@ -213,6 +218,7 @@ void loop() {
   sensors_event_t event;
 
   int i;
+
   uint8_t *gDataPtr = (uint8_t *)&gData;
 
   float tempX;
@@ -280,7 +286,7 @@ void loop() {
     while (1) {
       if (reportDone == true) {
 #ifdef DEBUG
-        DEBUG_SERIAL.println("\nReport results is true...\n");
+        DEBUG_SERIAL.println("\nreportDone is true...\n");
         pixels.clear();
         pixels.show();
 
@@ -290,13 +296,11 @@ void loop() {
           printHexChar(*(gDataPtr + i));
           ++i;
         }
-#endif // DEBUG
 
         sprintf((char *)&msgBuff,
                 "maxX = %.2f maxY = %.2f maxZ = %.2f g\nmaxMagX = %.2f maxMagY = %.2f maxMagZ = %.2f maxMag = %.2f g\n\r",
                 gData.maxX, gData.maxY, gData.maxZ, gData.maxMagX, gData.maxMagY, gData.maxMagZ, gData.maxMag);
 
-#ifdef DEBUG
         DEBUG_SERIAL.print("\n");
         DEBUG_SERIAL.print((char *)msgBuff);
         DEBUG_SERIAL.print("\n");
@@ -305,10 +309,14 @@ void loop() {
 
         delay(5000);
 
-        while(1) { //Shutdown the processor...
+        while(1) { 
+          if (reportDone == true) {
+            // Put the samd21 into deep sleep mode.
+            //Watchdog.enable();
+            LowPower.deepSleep();
+          }
         }
       }
-
       yield();
     }
   }
@@ -321,5 +329,6 @@ void reqISR(void) {
     Wire.write((uint8_t *)&gData, i2cDataSize);
     reportDone = true;
 
-  }
+  } 
 }
+
