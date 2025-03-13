@@ -29,7 +29,6 @@
 #include <RTCZero.h> // Include RTC library - make sure it's installed!
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoLowPower.h>
-//#include <Adafruit_SleepyDog.h>
 #include "gtrackeri2c.h"
 
 #define DEBUG
@@ -39,7 +38,7 @@
 #endif  // DEBUG
 
 #define ALARM_HOUR    0
-#define ALARM_MINUTE  5
+#define ALARM_MINUTE  30
 #define ALARM_SECOND  0
 
 i2cData gData;
@@ -84,8 +83,6 @@ void setup(void) {
   delay(1000);     // Wait for the serial port to become ready.
   DEBUG_SERIAL.println("gtracker code");
 #endif
-
-//  REPORT_SERIAL.begin(9600);
 
   rtc.begin();
 
@@ -214,9 +211,6 @@ void alarmMatch(void) {
 
 void loop() {
 
-  /* Get a new sensor event, normalized */
-  sensors_event_t event;
-
   int i;
 
   uint8_t *gDataPtr = (uint8_t *)&gData;
@@ -227,6 +221,9 @@ void loop() {
   float tempMag;
 
   bool localReportResults;
+
+  /* Get a new sensor event, normalized */
+  sensors_event_t event;
 
   noInterrupts();
   localReportResults = reportResults;
@@ -306,13 +303,11 @@ void loop() {
         DEBUG_SERIAL.print("\n");
 #endif // DEBUG
 
-
         delay(5000);
 
         while(1) { 
           if (reportDone == true) {
             // Put the samd21 into deep sleep mode.
-            //Watchdog.enable();
             LowPower.deepSleep();
           }
         }
