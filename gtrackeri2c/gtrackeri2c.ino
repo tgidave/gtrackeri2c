@@ -31,7 +31,7 @@
 #include <ArduinoLowPower.h>
 #include "gtrackeri2c.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
   #define DEBUG_SERIAL Serial
@@ -104,9 +104,9 @@ void setup(void) {
     DEBUG_SERIAL.println("H3LIS331 found!");
 #endif  // DEBUG
 
-    //lis.setRange(H3LIS331_RANGE_100_G);   // 100, 200, or 400 G!
+    lis.setRange(H3LIS331_RANGE_100_G);   // 100, 200, or 400 G!
     //lis.setRange(H3LIS331_RANGE_200_G);   // 100, 200, or 400 G!
-    lis.setRange(H3LIS331_RANGE_400_G);   // 100, 200, or 400 G!
+    //lis.setRange(H3LIS331_RANGE_400_G);   // 100, 200, or 400 G!
 
 #ifdef DEBUG
     DEBUG_SERIAL.print("Range set to: ");
